@@ -4,6 +4,21 @@ reticulate::py_require("gymnasium[classic_control]")
 gym <- reticulate::import("gymnasium")
 reticulate::py_require("numpy")
 np <- reticulate::import("numpy")
+reticulate::py_require("stable-baselines3")
+sb3 <- reticulate::import("stable_baselines3")
+
+# R version of from ... import ..
+make_vec_env <- sb3$common$env_util$make_vec_env
+# explicit integers required in R
+vec_env = make_vec_env("CartPole-v1", n_envs=as.integer(4))
+
+model = sb3$PPO("MlpPolicy", vec_env)
+model$learn(total_timesteps=as.integer(25000))
+model$save("ppo_cartpole")
+
+
+## Try a harder model, better with GPU
+
 reticulate::py_require("sb3-contrib")
 sb3_contrib <- reticulate::import("sb3_contrib")
 
