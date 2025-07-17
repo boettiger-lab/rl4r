@@ -1,17 +1,17 @@
 
 library(reticulate)
-reticulate::py_require("gymnasium[classic_control]")
-gym <- reticulate::import("gymnasium")
-reticulate::py_require("numpy")
-np <- reticulate::import("numpy")
-reticulate::py_require("stable-baselines3")
-sb3 <- reticulate::import("stable_baselines3")
+py_require("numpy")
+py_require("gymnasium[classic_control]")
+np <- import("numpy")
+gym <- import("gymnasium")
 
-# R version of from ... import ..
+py_require("stable-baselines3")
+sb3 <- import("stable_baselines3")
+
 make_vec_env <- sb3$common$env_util$make_vec_env
-# explicit integers required in R
-vec_env = make_vec_env("CartPole-v1", n_envs=as.integer(4))
 
+
+vec_env = make_vec_env("CartPole-v1", n_envs=as.integer(4))
 model = sb3$PPO("MlpPolicy", vec_env)
 model$learn(total_timesteps=as.integer(25000))
 model$save("ppo_cartpole")
