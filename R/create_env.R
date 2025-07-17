@@ -25,11 +25,17 @@ price = 9
 )
 
 utility <- function(pop, effort, p) {
-   effort[1] * pop[1] * p["price"]
+    # be careful about indexing
+   effort * pop * p["price"] + rnorm(1,0,.1)
+   return(-10)
 }
 
-fish2 <- classes$fish(config = list(parameters = parameters, utility = reticulate::r_to_py(utility)))
-fish2$utility
+fish2 <- classes$fish(config = list(parameters = parameters, 
+                                    utility = reticulate::r_to_py(utility)
+                                    )
+                     )
+fish2$step(0)
+
 
 
 # use stable-baselines3:
