@@ -7,7 +7,7 @@ class CustomEnv(gym.Env):
                  observation_space, 
                  step_fn, 
                  reset_fn, 
-                 config = {}):
+                 config):
         super().__init__()
 
         self.reset_fn = reset_fn
@@ -16,11 +16,12 @@ class CustomEnv(gym.Env):
         
         self.action_space = action_space
         self.observation_space = observation_space
+        self.reset()
 
     def step(self, action):
-        out = self.step_fn(self, action, config = self.config)
-        return out["observation"], out["reward"], out["terminated"], out["truncated"], out["info"]
+        out = self.step_fn(self, action)
+        return out[0], out[1], out[2], out[3], out[4]
 
     def reset(self, seed=None, options=None):
         out = self.reset_fn(self, seed, options)
-        return out["observation"], out["info"]
+        return out[0], out[1]
