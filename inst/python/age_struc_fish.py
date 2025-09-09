@@ -76,15 +76,31 @@ def default_obs(env):
 
 def default_harv(env):
     p = env.parameters
-    harvest_vec = env.state * p['harvest_vul'] * mortality[0]
+    harvest_vec = env.state * p['harvest_vul'] * env.exploit_U
     return harvest_vec
 
-def default_dyn():
+def default_dyn(env):
     # p["s"] * # last change
-    ...
+    n_age = env.parameters["n_age"]
+    new_state = env.parameters["s"] * env.state
+    #
+    new_state[0] = (
+        env.parameters["bha"]
+        * env.ssb / (1 + env.parameters["bhb"] * env.ssb)
+        # * (env.ssb**1.2 if env.ssb < 1 else 1) # let's suppress spawners if ssb is smaller than 1
+        * env.r_devs[env.timestep]
+    )
+    #
+    new_state[1:n_age-1] = env.state[0:n_age-2].copy() # advance fish an age class
+    #
+    new_state[n_age-1] =  (
+        env.state[n_age - 1].copy() + env.state[n_age - 2].copy()
+    )
+    return new_state
 
-def default_util():
-    ...
+def default_util(env):
+    harvested_biomass = np.sum(env.harvest_vec * env.parameters["wt"])
+    return harvested_biomass
 
 def default_r_devs():
     ...
@@ -204,26 +220,15 @@ class AsmEnv(gym.Env):
         return obs, {}
     
     def step(self, action):
-        # am i missing any steps? CHECK!
-        #
-        # update_vuls
-        # update_ssb
-        # harvest
-        # reward
-        # update state with harvest and natural mortality
-        # update_vuls
-        # update ssb
-        # population_growth (Beverton-Holt + somatic growth)
-        # observe
         
         # probably won't need the vuls separately here 
         # (just compute them implicitly in utility fn)
         self.update_vuls() 
         self.update_ssb()
         #
-        exploit_U = self.get_exploitation_rate(action)
-        harvest_vec = self.harvest(exploit_U)
-        reward = self.utility_fn(harvest_vec, exploit_U)
+        self.exploit_U = self.get_exploitation_rate(action)
+        self.harvest_vec = self.harvest()
+        self.reward = self.utility_fn()
         #
         self.state = self.parameters['s'] * (self.state - harvest_vec)
         #
